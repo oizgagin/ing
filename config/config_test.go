@@ -3,7 +3,9 @@ package config
 import (
 	"os"
 	"testing"
+	"time"
 
+	configtypes "github.com/oizgagin/ing/config/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,6 +16,8 @@ func TestParseConfig(t *testing.T) {
 		brokers = [ "broker1:9092", "broker2:9092", "broker3:9092" ]
 		topic = "rsvps"
 		consumer_group = "rsvps_consumer_group"
+		autocommit_interval = "30s"
+		session_timeout = "30s"
 
 		[redis]
 		addrs = [ "redis1:7000", "redis2:7000", "redis3:7000" ]
@@ -40,6 +44,8 @@ func TestParseConfig(t *testing.T) {
 	want.Kafka.Brokers = []string{"broker1:9092", "broker2:9092", "broker3:9092"}
 	want.Kafka.Topic = "rsvps"
 	want.Kafka.ConsumerGroup = "rsvps_consumer_group"
+	want.Kafka.AutocommitInterval = configtypes.Duration{Duration: 30 * time.Second}
+	want.Kafka.SessionTimeout = configtypes.Duration{Duration: 30 * time.Second}
 	want.Redis.Addrs = []string{"redis1:7000", "redis2:7000", "redis3:7000"}
 	want.Redis.User = "rsvps_redis_user"
 	want.Redis.Pass = "rsvps_redis_pass"

@@ -6,14 +6,11 @@ import (
 	"regexp"
 
 	"github.com/BurntSushi/toml"
+	"github.com/oizgagin/ing/rsvps"
 )
 
 type Config struct {
-	Kafka struct {
-		Brokers       []string `toml:"brokers"`
-		Topic         string   `toml:"topic"`
-		ConsumerGroup string   `toml:"consumer_group"`
-	} `toml:"kafka"`
+	Kafka rsvps.KafkaConfig `toml:"kafka"`
 
 	Redis struct {
 		Addrs []string `toml:"addrs"`
