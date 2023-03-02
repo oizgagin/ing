@@ -1,4 +1,4 @@
-package rsvps
+package kafka
 
 import (
 	"context"
@@ -7,11 +7,12 @@ import (
 	"sync/atomic"
 
 	configtypes "github.com/oizgagin/ing/config/types"
+	"github.com/oizgagin/ing/rsvps"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 )
 
-type KafkaConfig struct {
+type Config struct {
 	Brokers            []string             `toml:"brokers"`
 	Topic              string               `toml:"topic"`
 	ConsumerGroup      string               `toml:"consumer_group"`
@@ -19,10 +20,10 @@ type KafkaConfig struct {
 	AutocommitInterval configtypes.Duration `toml:"autocommit_interval"`
 }
 
-type KafkaStream struct {
+type Stream struct {
 	r         *kafka.Reader
 	l         *zap.Logger
-	ch        chan RSVP
+	ch        chan rsvps.RSVP
 	ctxCancel func()
 
 	stats struct {
@@ -31,12 +32,12 @@ type KafkaStream struct {
 	}
 }
 
-func NewKafkaStream(cfg KafkaConfig, logger *zap.Logger) *KafkaStream {
+func NewStream(cfg Config, logger *zap.Logger) *Stream {
 	kafkaLogger := newKafkaLogger(logger)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	stream := &KafkaStream{
+	stream := &Stream{
 		r: kafka.NewReader(kafka.ReaderConfig{
 			Brokers:        cfg.Brokers,
 			GroupID:        cfg.ConsumerGroup,
@@ -47,7 +48,7 @@ func NewKafkaStream(cfg KafkaConfig, logger *zap.Logger) *KafkaStream {
 			ErrorLogger:    kafka.LoggerFunc(kafkaLogger.errorLog),
 		}),
 		l:         logger.With(zap.String("logger", "kafka_stream")),
-		ch:        make(chan RSVP),
+		ch:        make(chan rsvps.RSVP),
 		ctxCancel: cancel,
 	}
 
@@ -56,26 +57,26 @@ func NewKafkaStream(cfg KafkaConfig, logger *zap.Logger) *KafkaStream {
 	return stream
 }
 
-func (stream *KafkaStream) RSVPS() <-chan RSVP {
+func (stream *Stream) RSVPS() <-chan rsvps.RSVP {
 	return stream.ch
 }
 
-func (stream *KafkaStream) Close() error {
+func (stream *Stream) Close() error {
 	err := stream.r.Close()
 	stream.ctxCancel()
 	close(stream.ch)
 	return err
 }
 
-func (stream *KafkaStream) TotalMsgs() uint64 {
+func (stream *Stream) TotalMsgs() uint64 {
 	return atomic.LoadUint64(&stream.stats.totalMsgs)
 }
 
-func (stream *KafkaStream) InvalidMsgs() uint64 {
+func (stream *Stream) InvalidMsgs() uint64 {
 	return atomic.LoadUint64(&stream.stats.invalidMsgs)
 }
 
-func (stream *KafkaStream) loop(ctx context.Context) {
+func (stream *Stream) loop(ctx context.Context) {
 	for {
 		m, err := stream.r.ReadMessage(ctx)
 		if err != nil {
@@ -91,7 +92,7 @@ func (stream *KafkaStream) loop(ctx context.Context) {
 
 		l.Debug("received kafka message")
 
-		var rsvp RSVP
+		var rsvp rsvps.RSVP
 		if err := json.Unmarshal(m.Value, &rsvp); err != nil {
 			atomic.AddUint64(&stream.stats.invalidMsgs, 1)
 			l.Error("invalid kafka message", zap.Error(err))
