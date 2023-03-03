@@ -15,7 +15,7 @@ In general, I've tried to sketch some basic skeleton, but with ability to scale 
 
 1. e2e tests (or maybe the better term is "integration tests", depends on developer I guess :) ) and unit tests on some important parts of code;
 
-2. logs and metrics;
+2. config (just for fun added simple secrets parsing from env), logs and metrics;
 
 3. no alerts (decided not to write them since it's heavily dependent on existing monitoring infra);
 
