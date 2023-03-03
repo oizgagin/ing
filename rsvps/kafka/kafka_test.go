@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -38,7 +39,7 @@ func TestStream(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), maxTestDuration)
 	defer cancel()
 
-	brokerAddr, producer, logger, rsvps, tearDown := setUp(t, ctx, topic)
+	brokerAddr, producer, logger, rawRsvps, tearDown := setUp(t, ctx, topic)
 	defer tearDown(t)
 
 	stream := kafka.NewStream(kafka.Config{
@@ -50,12 +51,23 @@ func TestStream(t *testing.T) {
 	}, logger)
 	defer stream.Close()
 
-	err := producer.produceMsgs(ctx, rsvps)
+	err := producer.produceMsgs(ctx, rawRsvps)
 	require.NoError(t, err)
 
-	readRsvps := readStream(stream, 5*time.Second) // TODO: get rid of hardcoded 5s window, wait for all messages explicitly
+	gotRsvps := readStream(ctx, stream, 5*time.Second) // TODO: get rid of hardcoded 5s window, wait for all messages explicitly
 
-	require.Equal(t, len(readRsvps), countValidRsvps(rsvps))
+	wantRsvps := parseRsvps(rawRsvps)
+
+	cmpRsvp := func(rsvp1, rsvp2 rsvps.RSVP) bool {
+		return rsvp1.ID < rsvp2.ID
+	}
+
+	sort.Slice(gotRsvps, func(i, j int) bool { return cmpRsvp(gotRsvps[i], gotRsvps[j]) })
+	sort.Slice(wantRsvps, func(i, j int) bool { return cmpRsvp(wantRsvps[i], wantRsvps[j]) })
+
+	require.Equal(t, wantRsvps, gotRsvps)
+	require.Equal(t, len(rawRsvps), int(stream.TotalMsgs()))
+	require.Equal(t, len(rawRsvps)-len(wantRsvps), int(stream.InvalidMsgs()))
 }
 
 func setUp(t *testing.T, ctx context.Context, topic string) (string, *producer, *zap.Logger, []string, func(t *testing.T)) {
@@ -69,13 +81,13 @@ func setUp(t *testing.T, ctx context.Context, topic string) (string, *producer, 
 
 	producer := newProducer(brokerAddr, topic)
 
-	rsvps, err := getTestRsvps("testdata/meetups.json.gz")
+	rawRsvps, err := getTestRsvps("testdata/meetups.json.gz")
 	require.NoError(t, err)
-	require.NotEmpty(t, rsvps)
+	require.NotEmpty(t, rawRsvps)
 
 	logger := zaptest.NewLogger(t)
 
-	return brokerAddr, producer, logger, rsvps, func(t *testing.T) {
+	return brokerAddr, producer, logger, rawRsvps, func(t *testing.T) {
 		assert.NoError(t, logger.Sync())
 		assert.NoError(t, producer.close())
 	}
@@ -135,19 +147,19 @@ func getTestRsvps(filename string) ([]string, error) {
 	return strings.Split(string(content), "\n"), nil
 }
 
-func countValidRsvps(strs []string) (total int) {
-	var rsvp rsvps.RSVP
-	for _, str := range strs {
-		if err := json.Unmarshal([]byte(str), &rsvp); err == nil {
-			total++
+func parseRsvps(raws []string) (valid []rsvps.RSVP) {
+	for _, raw := range raws {
+		var rsvp rsvps.RSVP
+		if err := json.Unmarshal([]byte(raw), &rsvp); err == nil {
+			valid = append(valid, rsvp)
 		}
 	}
-	return total
+	return
 }
 
 // readStream waits till the first message appears at stream and returns all messages
 // received during the `duration` time after first message
-func readStream(stream *kafka.Stream, duration time.Duration) (rsvps []rsvps.RSVP) {
+func readStream(ctx context.Context, stream *kafka.Stream, duration time.Duration) (rsvps []rsvps.RSVP) {
 	var (
 		readCh   = make(chan struct{})
 		readOnce sync.Once
@@ -160,8 +172,16 @@ func readStream(stream *kafka.Stream, duration time.Duration) (rsvps []rsvps.RSV
 		}
 	}()
 
-	<-readCh
-	time.Sleep(duration)
+	select {
+	case <-ctx.Done():
+		return nil
+	case <-readCh:
+	}
+
+	select {
+	case <-ctx.Done():
+	case <-time.After(duration):
+	}
 
 	return rsvps
 }

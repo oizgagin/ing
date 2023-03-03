@@ -3,6 +3,8 @@ package rsvps
 type RSVP struct {
 	ID uint64 `json:"rsvp_id"`
 
+	Mtime int64 `json:"mtime"`
+
 	Event struct {
 		ID   string `json:"event_id"`
 		Time int64  `json:"time"`
