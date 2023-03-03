@@ -36,7 +36,7 @@ In general, I've tried to sketch some basic skeleton, but with ability to scale 
 
 3. use some sort of sharding in rsvps table (for instance, have consistent hashing and shard by rsvp_id, interesting here is ways to deal with hotspots, i.e. popular events);
 
-4. handle possible inconsistencies in stored event details (imagine the situation when we've got several rsvps to the same event but with conflicting group/venue info - currently implemented solution with "first one wins", will be glad to discuss various approaches);
+4. maybe prevent possible inconsistencies in stored event details (imagine the situation when we've got several rsvps to the same event but with conflicting group/venue info);
 
 4. maybe store rsvps in columnar or in document-oriented (MongoDB);
 
