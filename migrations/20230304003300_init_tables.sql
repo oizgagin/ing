@@ -1,4 +1,4 @@
-CREATE TABLE events (
+CREATE TABLE IF NOT EXISTS events (
     id VARCHAR(100) NOT NULL,
     name TEXT NOT NULL,
     time TIMESTAMP NOT NULL,
@@ -6,7 +6,7 @@ CREATE TABLE events (
     PRIMARY KEY (id)
 );
 
-CREATE TABLE venues (
+CREATE TABLE IF NOT EXISTS venues (
     id BIGINT NOT NULL,
     name TEXT NOT NULL,
     lat REAL NOT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE venues (
     PRIMARY KEY (id)
 );
 
-CREATE TABLE groups (
+CREATE TABLE IF NOT EXISTS groups (
     id BIGINT NOT NULL,
     country VARCHAR(2) NOT NULL,
     state VARCHAR(2) NULL,
@@ -27,7 +27,7 @@ CREATE TABLE groups (
     PRIMARY KEY (id)
 );
 
-CREATE TABLE members (
+CREATE TABLE IF NOT EXISTS members (
     id BIGINT NOT NULL,
     name TEXT NOT NULL,
     photo TEXT NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE members (
 
 CREATE TYPE rsvp_visibility AS ENUM ('public', 'private');
 
-CREATE TABLE rsvps (
+CREATE TABLE IF NOT EXISTS rsvps (
     id BIGINT NOT NULL,
     PRIMARY KEY (id),
 
@@ -59,7 +59,7 @@ CREATE TABLE rsvps (
 );
 
 
-CREATE TABLE event_counters (
+CREATE TABLE IF NOT EXISTS event_counters (
     rsvp_date date NOT NULL,
     event_id varchar(100) NOT NULL,
     received_rvsps integer NOT NULL,
