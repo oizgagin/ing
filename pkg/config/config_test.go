@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	configtypes "github.com/oizgagin/ing/config/types"
+	configtypes "github.com/oizgagin/ing/pkg/config/types"
 	"github.com/stretchr/testify/assert"
 )
 

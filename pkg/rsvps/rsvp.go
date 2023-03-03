@@ -47,7 +47,3 @@ type Group struct {
 		TopicName string `json:"topic_name"`
 	} `json:"topics"`
 }
-
-type Stream interface {
-	RSVPS() <-chan RSVP
-}

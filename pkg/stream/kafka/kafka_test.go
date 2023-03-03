@@ -21,9 +21,9 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
 
-	configtypes "github.com/oizgagin/ing/config/types"
-	"github.com/oizgagin/ing/rsvps"
-	"github.com/oizgagin/ing/rsvps/kafka"
+	configtypes "github.com/oizgagin/ing/pkg/config/types"
+	"github.com/oizgagin/ing/pkg/rsvps"
+	"github.com/oizgagin/ing/pkg/stream/kafka"
 )
 
 func TestStream(t *testing.T) {

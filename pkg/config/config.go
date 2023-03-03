@@ -6,7 +6,7 @@ import (
 	"regexp"
 
 	"github.com/BurntSushi/toml"
-	"github.com/oizgagin/ing/rsvps/kafka"
+	"github.com/oizgagin/ing/pkg/stream/kafka"
 )
 
 type Config struct {

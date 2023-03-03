@@ -7,10 +7,11 @@ import (
 	"sync"
 	"sync/atomic"
 
-	configtypes "github.com/oizgagin/ing/config/types"
-	"github.com/oizgagin/ing/rsvps"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
+
+	configtypes "github.com/oizgagin/ing/pkg/config/types"
+	"github.com/oizgagin/ing/pkg/rsvps"
 )
 
 type Config struct {
