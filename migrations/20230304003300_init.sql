@@ -7,7 +7,7 @@ CREATE TABLE events (
 );
 
 CREATE TABLE venues (
-    id INT NOT NULL,
+    id BIGINT NOT NULL,
     name TEXT NOT NULL,
     lat REAL NOT NULL,
     lon REAL NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE venues (
 );
 
 CREATE TABLE groups (
-    id INT NOT NULL,
+    id BIGINT NOT NULL,
     country VARCHAR(2) NOT NULL,
     state VARCHAR(2) NULL,
     city VARCHAR(100) NOT NULL,
@@ -27,10 +27,17 @@ CREATE TABLE groups (
     PRIMARY KEY (id)
 );
 
+CREATE TABLE members (
+    id BIGINT NOT NULL,
+    name TEXT NOT NULL,
+    photo TEXT NOT NULL,
+    PRIMARY KEY (id)
+);
+
 CREATE TYPE rsvp_visibility AS ENUM ('public', 'private');
 
 CREATE TABLE rsvps (
-    id INT NOT NULL,
+    id BIGINT NOT NULL,
     PRIMARY KEY (id),
 
     mtime TIMESTAMP NOT NULL,
@@ -41,11 +48,14 @@ CREATE TABLE rsvps (
     event_id VARCHAR(100) NOT NULL,
     CONSTRAINT fk_event_id FOREIGN KEY (event_id) REFERENCES events(id),
 
-    venue_id INT NOT NULL,
+    venue_id BIGINT NOT NULL,
     CONSTRAINT fk_venue_id FOREIGN KEY (venue_id) REFERENCES venues(id),
 
-    group_id INT NOT NULL,
-    CONSTRAINT fk_group_id FOREIGN KEY (group_id) REFERENCES groups(id)
+    group_id BIGINT NOT NULL,
+    CONSTRAINT fk_group_id FOREIGN KEY (group_id) REFERENCES groups(id),
+
+    member_id BIGINT NOT NULL,
+    CONSTRAINT fk_member_id FOREIGN KEY (member_id) REFERENCES members(id)
 );
 
 

@@ -6,7 +6,7 @@ In general, I've tried to sketch some basic skeleton, but with ability to scale 
 
 2. persistance is implemented on top of PostgreSQL;
 
-3. redis to cache top k meetups (either top k over all time, or top k at given date);
+3. redis to cache top k events at given date;
 
 4. k is dynamic (passed in request);
 
@@ -34,9 +34,9 @@ In general, I've tried to sketch some basic skeleton, but with ability to scale 
 
 2. calculate top k on-the-fly (i.e. topk in Redis Stack, ensure fault-tolerancy with replication, enable redis persistency (?))
 
-3. use some sort of sharding in rsvps table (for instance, have consistent hashing and shard by rsvp_id, interesting here is ways to deal with hotspots, i.e. popular meetups);
+3. use some sort of sharding in rsvps table (for instance, have consistent hashing and shard by rsvp_id, interesting here is ways to deal with hotspots, i.e. popular events);
 
-4. handle possible inconsistencies in stored meetup details (imagine the situation when we've got several rsvps to the same meetup but with conflicting group/venue info - currently implemented solution with "first one wins", will be glad to discuss various approaches);
+4. handle possible inconsistencies in stored event details (imagine the situation when we've got several rsvps to the same event but with conflicting group/venue info - currently implemented solution with "first one wins", will be glad to discuss various approaches);
 
 4. maybe store rsvps in columnar or in document-oriented (MongoDB);
 
