@@ -1,7 +1,7 @@
 package rsvps
 
 type RSVP struct {
-	ID string `json:"rsvp_id"`
+	ID uint64 `json:"rsvp_id"`
 
 	Event struct {
 		ID   string `json:"event_id"`

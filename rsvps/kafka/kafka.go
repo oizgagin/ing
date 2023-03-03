@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"sync/atomic"
 
 	configtypes "github.com/oizgagin/ing/config/types"
@@ -21,9 +22,13 @@ type Config struct {
 }
 
 type Stream struct {
-	r         *kafka.Reader
-	l         *zap.Logger
-	ch        chan rsvps.RSVP
+	r *kafka.Reader
+
+	l *zap.Logger
+
+	ch     chan rsvps.RSVP
+	chOnce sync.Once
+
 	ctxCancel func()
 
 	stats struct {
@@ -64,7 +69,7 @@ func (stream *Stream) RSVPS() <-chan rsvps.RSVP {
 func (stream *Stream) Close() error {
 	err := stream.r.Close()
 	stream.ctxCancel()
-	close(stream.ch)
+	stream.chOnce.Do(func() { close(stream.ch) })
 	return err
 }
 
