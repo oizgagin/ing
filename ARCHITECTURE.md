@@ -1,16 +1,18 @@
-# HOW IT WORKS
+# OVERVIEW
 
-In general, I've tried to sketch some basic skeleton, but with ability to scale it if needed.
+In general, I've tried to sketch some basic (having only "interesting" parts) skeleton, but with ability to scale it if needed.
 
-1. incoming kafka stream of RSVPs;
+1. rsvps are coming from Kafka;
 
 2. persistance is implemented on top of PostgreSQL;
 
 3. redis to cache event info;
 
-4. for top k events request is dynamic (passed in request);
+4. for top k events `k` is dynamic (passed in request);
 
-5. only rsvps with "yes" response are considered when calculating top k events.
+5. only rsvps with "yes" response are considered when calculating top k events;
+
+6. simple methods for getting member/group/revenue info by its id are omitted (they're very simple).
 
 
 # "PRODUCTION-READINESS"
@@ -42,4 +44,6 @@ In general, I've tried to sketch some basic skeleton, but with ability to scale 
 
 6. maybe use timeseries database for counters (i.e. TimescaleDB);
 
-7. implement bulk inserts.
+7. implement bulk inserts;
+
+8. somehow limit `k` parametere in Topk method.
