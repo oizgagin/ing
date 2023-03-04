@@ -6,6 +6,10 @@ test:
 vendor:
 	go mod tidy && go mod vendor
 
+.PHONY: test-e2e-up
+test-e2e-up:
+	docker-compose -f docker-compose-e2e.yml up -d
+
 .PHONY: test-e2e-down
 test-e2e-down:
 	docker-compose -f docker-compose-e2e.yml down
