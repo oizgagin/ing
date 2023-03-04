@@ -200,14 +200,13 @@ func (db *DB) TopkEvents(ctx context.Context, date time.Time, k uint) ([]dbpkg.T
 	}
 
 	return topks, nil
-
 }
 
 var ErrNoEvents = errors.New("no events in result set")
 
-func (db *DB) GetEventInfo(ctx context.Context, eventID string) (dbpkg.EventInfo, error) {
+func (db *DB) GetEventInfo(ctx context.Context, eventID string) (rsvps.EventInfo, error) {
 	var (
-		eventInfo  dbpkg.EventInfo
+		eventInfo  rsvps.EventInfo
 		groupState zeronull.Text
 	)
 
@@ -252,9 +251,9 @@ func (db *DB) GetEventInfo(ctx context.Context, eventID string) (dbpkg.EventInfo
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return dbpkg.EventInfo{}, ErrNoEvents
+			return rsvps.EventInfo{}, ErrNoEvents
 		}
-		return dbpkg.EventInfo{}, fmt.Errorf("could not query event info: %w", err)
+		return rsvps.EventInfo{}, fmt.Errorf("could not query event info: %w", err)
 	}
 
 	eventInfo.Group.State = string(groupState)

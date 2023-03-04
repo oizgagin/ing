@@ -49,3 +49,9 @@ type GroupTopic struct {
 	Urlkey    string `json:"urlkey"`
 	TopicName string `json:"topic_name"`
 }
+
+type EventInfo struct {
+	Group          Group
+	Venue          Venue
+	ConfirmedRSVPs int
+}
