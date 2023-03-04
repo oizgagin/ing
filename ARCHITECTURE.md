@@ -38,7 +38,7 @@ In general, I've tried to sketch some basic (having only "interesting" parts) sk
 
 3. use some sort of sharding (for instance, shard rsvps table by rsvp_id);
 
-4. maybe prevent possible inconsistencies in stored event details (imagine the situation when we've got several rsvps to the same event but with conflicting group/venue info), currently it's not supported;
+4. maybe prevent possible inconsistencies in stored event details (imagine the situation when we've got several rsvps to the same event but with conflicting group/venue info), currently first received info about info is stored;
 
 5. maybe store rsvps in columnar or in document-oriented (MongoDB);
 
@@ -46,4 +46,4 @@ In general, I've tried to sketch some basic (having only "interesting" parts) sk
 
 7. implement bulk inserts;
 
-8. somehow limit `k` parametere in Topk method.
+8. limit `k` parametere in Topk method.
