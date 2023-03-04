@@ -14,8 +14,8 @@ type DB interface {
 }
 
 type TopkEvent struct {
-	Event rsvps.Event
-	RSVPs uint
+	Event          rsvps.Event
+	ConfirmedRSVPs int
 }
 
 type EventInfo struct {

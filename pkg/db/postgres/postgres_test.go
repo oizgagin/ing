@@ -111,7 +111,7 @@ func TestDB_TopkEvents(t *testing.T) {
 		},
 	}
 
-	eventCounters := map[string]uint{
+	eventCounters := map[string]int{
 		"event_id1": 10,
 		"event_id2": 20,
 		"event_id3": 21,
@@ -137,7 +137,7 @@ func TestDB_TopkEvents(t *testing.T) {
 	for i := 1; i <= 7; i++ {
 		eventID := fmt.Sprintf("event_id%d", i)
 
-		for j := 0; j < int(eventCounters[eventID]); j++ {
+		for j := 0; j < eventCounters[eventID]; j++ {
 			currRsvp := rsvp
 
 			currRsvp.ID = int64(i*1e7 + j)
@@ -158,12 +158,12 @@ func TestDB_TopkEvents(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []dbpkg.TopkEvent{
 		{
-			Event: rsvps.Event{ID: "event_id7", Name: "event_name7", URL: "event_url7", Time: day1.UnixMilli()},
-			RSVPs: eventCounters["event_id7"],
+			Event:          rsvps.Event{ID: "event_id7", Name: "event_name7", URL: "event_url7", Time: day1.UnixMilli()},
+			ConfirmedRSVPs: eventCounters["event_id7"],
 		},
 		{
-			Event: rsvps.Event{ID: "event_id5", Name: "event_name5", URL: "event_url5", Time: day1.UnixMilli()},
-			RSVPs: eventCounters["event_id5"],
+			Event:          rsvps.Event{ID: "event_id5", Name: "event_name5", URL: "event_url5", Time: day1.UnixMilli()},
+			ConfirmedRSVPs: eventCounters["event_id5"],
 		},
 	}, topks1)
 
@@ -171,12 +171,12 @@ func TestDB_TopkEvents(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []dbpkg.TopkEvent{
 		{
-			Event: rsvps.Event{ID: "event_id6", Name: "event_name6", URL: "event_url6", Time: day2.UnixMilli()},
-			RSVPs: eventCounters["event_id6"],
+			Event:          rsvps.Event{ID: "event_id6", Name: "event_name6", URL: "event_url6", Time: day2.UnixMilli()},
+			ConfirmedRSVPs: eventCounters["event_id6"],
 		},
 		{
-			Event: rsvps.Event{ID: "event_id4", Name: "event_name4", URL: "event_url4", Time: day2.UnixMilli()},
-			RSVPs: eventCounters["event_id4"],
+			Event:          rsvps.Event{ID: "event_id4", Name: "event_name4", URL: "event_url4", Time: day2.UnixMilli()},
+			ConfirmedRSVPs: eventCounters["event_id4"],
 		},
 	}, topks2)
 }

@@ -186,7 +186,7 @@ func (db *DB) TopkEvents(ctx context.Context, date time.Time, k uint) ([]dbpkg.T
 		topk     dbpkg.TopkEvent
 		topkTime time.Time
 	)
-	_, err = pgx.ForEachRow(rows, []any{&topk.Event.ID, &topk.Event.Name, &topkTime, &topk.Event.URL, &topk.RSVPs}, func() error {
+	_, err = pgx.ForEachRow(rows, []any{&topk.Event.ID, &topk.Event.Name, &topkTime, &topk.Event.URL, &topk.ConfirmedRSVPs}, func() error {
 		topk.Event.Time = topkTime.UnixMilli()
 		topks = append(topks, topk)
 		return nil
