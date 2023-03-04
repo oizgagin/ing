@@ -6,24 +6,20 @@ import (
 	"regexp"
 
 	"github.com/BurntSushi/toml"
+
+	"github.com/oizgagin/ing/pkg/db/postgres"
 	"github.com/oizgagin/ing/pkg/stream/kafka"
 )
 
 type Config struct {
-	Kafka kafka.Config `toml:"kafka"`
+	Kafka    kafka.Config    `toml:"kafka"`
+	Postgres postgres.Config `toml:"postgres"`
 
 	Redis struct {
 		Addrs []string `toml:"addrs"`
 		User  string   `toml:"user"`
 		Pass  string   `toml:"pass"`
 	} `toml:"redis"`
-
-	Postgres struct {
-		Addr   string `toml:"addr"`
-		User   string `toml:"user"`
-		Pass   string `toml:"pass"`
-		DBName string `toml:"dbname"`
-	} `toml:"postgres"`
 }
 
 var (
