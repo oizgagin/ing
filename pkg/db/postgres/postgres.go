@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -145,11 +146,11 @@ func (db *DB) SaveRSVP(ctx context.Context, rsvp rsvps.RSVP) error {
 	if rsvpResponse {
 		_, err = tx.Exec(ctx, `
 			INSERT INTO
-				event_counters (rsvp_date, event_id, received_rsvps)
+				event_counters (rsvp_date, event_id, confirmed_rsvps)
 			VALUES
 				($1, $2, 1)
 			ON CONFLICT (rsvp_date, event_id) DO UPDATE
-				SET received_rsvps = event_counters.received_rsvps + 1
+				SET confirmed_rsvps = event_counters.confirmed_rsvps + 1
 		`, time.UnixMilli(rsvp.Mtime).UTC().Truncate(24*time.Hour), rsvp.Event.ID)
 
 		if err != nil {
@@ -168,16 +169,15 @@ func (db *DB) TopkEvents(ctx context.Context, date time.Time, k uint) ([]dbpkg.T
 	date = date.UTC().Truncate(24 * time.Hour)
 
 	rows, err := db.pool.Query(ctx, `
+		WITH topk AS (
+			SELECT event_id, confirmed_rsvps FROM event_counters WHERE rsvp_date = $1 ORDER BY confirmed_rsvps DESC LIMIT $2
+		)
 		SELECT
-			events.id, events.name, events.time, events.url, counters.received_rsvps
+			events.id, events.name, events.time, events.url, topk.confirmed_rsvps
 		FROM
-			events
-		INNER JOIN
-			(SELECT event_id, received_rsvps FROM event_counters WHERE rsvp_date = $1 ORDER BY received_rsvps DESC LIMIT $2) AS counters
-		ON
-			events.id = counters.event_id
+			events INNER JOIN topk ON events.id = topk.event_id
 		ORDER BY
-			counters.received_rsvps DESC
+			topk.confirmed_rsvps DESC
 	`, date, k)
 
 	if err != nil {
@@ -201,6 +201,65 @@ func (db *DB) TopkEvents(ctx context.Context, date time.Time, k uint) ([]dbpkg.T
 
 	return topks, nil
 
+}
+
+var ErrNoEvents = errors.New("no events in result set")
+
+func (db *DB) GetEventInfo(ctx context.Context, eventID string) (dbpkg.EventInfo, error) {
+	var (
+		eventInfo  dbpkg.EventInfo
+		groupState zeronull.Text
+	)
+
+	err := db.pool.QueryRow(ctx, `
+		SELECT
+			groups.id,
+			groups.country,
+			groups.state,
+			groups.city,
+			groups.name,
+			groups.lat,
+			groups.lon,
+			groups.urlname,
+			groups.topics,
+			venues.id,
+			venues.name,
+			venues.lat,
+			venues.lon,
+			(SELECT SUM(confirmed_rsvps) FROM event_counters WHERE event_id = $1)
+		FROM
+			events
+				INNER JOIN groups ON events.group_id = groups.id
+				INNER JOIN venues ON events.venue_id = venues.id
+		WHERE
+			events.id = $1
+	`, eventID).Scan(
+		&eventInfo.Group.ID,
+		&eventInfo.Group.Country,
+		&groupState,
+		&eventInfo.Group.City,
+		&eventInfo.Group.Name,
+		&eventInfo.Group.Lat,
+		&eventInfo.Group.Lon,
+		&eventInfo.Group.Urlname,
+		&eventInfo.Group.Topics,
+		&eventInfo.Venue.ID,
+		&eventInfo.Venue.Name,
+		&eventInfo.Venue.Lat,
+		&eventInfo.Venue.Lon,
+		&eventInfo.ConfirmedRSVPs,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return dbpkg.EventInfo{}, ErrNoEvents
+		}
+		return dbpkg.EventInfo{}, fmt.Errorf("could not query event info: %w", err)
+	}
+
+	eventInfo.Group.State = string(groupState)
+
+	return eventInfo, nil
 }
 
 func (db *DB) Close() {

@@ -188,6 +188,52 @@ func TestDB_TopkEvents(t *testing.T) {
 	}, topks2)
 }
 
+func TestDB_GetEventInfo(t *testing.T) {
+
+	var (
+		maxTestDuration = time.Minute
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), maxTestDuration)
+	defer cancel()
+
+	db, _, tearDown := setUp(t, ctx)
+	defer tearDown()
+
+	rsvp := rsvps.RSVP{
+		ID:         1001,
+		Mtime:      1002,
+		Guests:     1,
+		Visibility: "public",
+		Response:   "yes",
+		Venue:      rsvps.Venue{ID: 2001, Name: "venue_name1", Lat: 21, Lon: 22},
+		Member:     rsvps.Member{ID: 3001, Name: "member_name1", Photo: "member_photo1"},
+		Event:      rsvps.Event{ID: "event_id1", Name: "event_name1", URL: "event_url1", Time: 4001},
+		Group: rsvps.Group{
+			ID:      5001,
+			Name:    "group_name1",
+			Country: "US",
+			State:   "",
+			City:    "group_city1",
+			Lat:     51,
+			Lon:     52,
+			Urlname: "group_urlname1",
+			Topics: []rsvps.GroupTopic{
+				{Urlkey: "group_urlkey1", TopicName: "group_topicname1"},
+				{Urlkey: "group_urlkey2", TopicName: "group_topicname2"},
+				{Urlkey: "group_urlkey3", TopicName: "group_topicname3"},
+			},
+		},
+	}
+
+	err := db.SaveRSVP(ctx, rsvp)
+	require.NoError(t, err)
+
+	info, err := db.GetEventInfo(ctx, "event_id1")
+	require.NoError(t, err)
+	require.Equal(t, dbpkg.EventInfo{Venue: rsvp.Venue, Group: rsvp.Group, ConfirmedRSVPs: 1}, info)
+}
+
 func setUp(t *testing.T, ctx context.Context) (*postgres.DB, *pgx.Conn, func()) {
 	t.Helper()
 
@@ -214,6 +260,9 @@ func setUp(t *testing.T, ctx context.Context) (*postgres.DB, *pgx.Conn, func()) 
 	require.NoError(t, err)
 
 	conn, err := pgx.Connect(ctx, cfg.URL())
+	require.NoError(t, err)
+
+	err = flushAll(ctx, conn)
 	require.NoError(t, err)
 
 	return db, conn, func() {
@@ -332,6 +381,28 @@ func selectRsvp(t *testing.T, ctx context.Context, conn *pgx.Conn, rsvpID int64)
 	}
 
 	return
+}
+
+func flushAll(ctx context.Context, conn *pgx.Conn) error {
+	if _, err := conn.Exec(ctx, `DELETE FROM event_counters`); err != nil {
+		return fmt.Errorf("could not truncate event_counters table: %w", err)
+	}
+	if _, err := conn.Exec(ctx, `DELETE FROM rsvps`); err != nil {
+		return fmt.Errorf("could not truncate rsvps table: %w", err)
+	}
+	if _, err := conn.Exec(ctx, `DELETE FROM events`); err != nil {
+		return fmt.Errorf("could not truncate events table: %w", err)
+	}
+	if _, err := conn.Exec(ctx, `DELETE FROM groups`); err != nil {
+		return fmt.Errorf("could not truncate groups table: %w", err)
+	}
+	if _, err := conn.Exec(ctx, `DELETE FROM members`); err != nil {
+		return fmt.Errorf("could not truncate members table: %w", err)
+	}
+	if _, err := conn.Exec(ctx, `DELETE FROM venues`); err != nil {
+		return fmt.Errorf("could not truncate venues table: %w", err)
+	}
+	return nil
 }
 
 func TestConfig(t *testing.T) {
