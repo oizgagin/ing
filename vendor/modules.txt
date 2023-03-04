@@ -2,6 +2,9 @@
 ## explicit; go 1.16
 github.com/BurntSushi/toml
 github.com/BurntSushi/toml/internal
+# github.com/VictoriaMetrics/metrics v1.23.1
+## explicit; go 1.15
+github.com/VictoriaMetrics/metrics
 # github.com/benbjohnson/clock v1.1.0
 ## explicit; go 1.15
 github.com/benbjohnson/clock
@@ -122,6 +125,12 @@ github.com/segmentio/kafka-go/sasl
 ## explicit; go 1.13
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
+# github.com/valyala/fastrand v1.1.0
+## explicit
+github.com/valyala/fastrand
+# github.com/valyala/histogram v1.2.0
+## explicit; go 1.12
+github.com/valyala/histogram
 # go.uber.org/atomic v1.7.0
 ## explicit; go 1.13
 go.uber.org/atomic

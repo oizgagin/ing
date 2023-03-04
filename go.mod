@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/BurntSushi/toml v1.2.1
+	github.com/VictoriaMetrics/metrics v1.23.1
 	github.com/jackc/pgx/v5 v5.3.1
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/segmentio/kafka-go v0.4.39
@@ -24,6 +25,8 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
+	github.com/valyala/fastrand v1.1.0 // indirect
+	github.com/valyala/histogram v1.2.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.6.0 // indirect

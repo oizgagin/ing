@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
@@ -59,6 +60,7 @@ func NewStream(cfg Config, logger *zap.Logger) *Stream {
 	}
 
 	go stream.loop(ctx)
+	go stream.metrics(ctx)
 
 	return stream
 }
@@ -109,6 +111,26 @@ func (stream *Stream) loop(ctx context.Context) {
 		case stream.ch <- rsvp:
 		case <-ctx.Done():
 			return
+		}
+	}
+}
+
+func (stream *Stream) metrics(ctx context.Context) {
+	for {
+		stats := stream.r.Stats()
+
+		kafkaDialsTotal.Set(uint64(stats.Dials))
+		kafkaFetchesTotal.Set(uint64(stats.Fetches))
+		kafkaMessagesTotal.Set(uint64(stats.Messages))
+		kafkaBytesTotal.Set(uint64(stats.Bytes))
+		kafkaRebalancesTotal.Set(uint64(stats.Rebalances))
+		kafkaTimeoutsTotal.Set(uint64(stats.Timeouts))
+		kafkaErrorsTotal.Set(uint64(stats.Errors))
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(30 * time.Second):
 		}
 	}
 }
