@@ -6,8 +6,11 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype/zeronull"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	dbpkg "github.com/oizgagin/ing/pkg/db"
 	"github.com/oizgagin/ing/pkg/rsvps"
 )
 
@@ -155,6 +158,45 @@ func (db *DB) SaveRSVP(ctx context.Context, rsvp rsvps.RSVP) error {
 	}
 
 	return nil
+}
+
+func (db *DB) TopkEvents(ctx context.Context, date time.Time, k uint) ([]dbpkg.TopkEvent, error) {
+	date = date.UTC().Truncate(24 * time.Hour)
+
+	rows, err := db.pool.Query(ctx, `
+		SELECT
+			events.id, events.name, events.time, events.url, counters.received_rsvps
+		FROM
+			events
+		INNER JOIN
+			(SELECT event_id, received_rsvps FROM event_counters WHERE rsvp_date = $1 ORDER BY received_rsvps DESC LIMIT $2) AS counters
+		ON
+			events.id = counters.event_id
+		ORDER BY
+			counters.received_rsvps DESC
+	`, date, k)
+
+	if err != nil {
+		return nil, fmt.Errorf("could not query topk events: %w", err)
+	}
+
+	var (
+		topks []dbpkg.TopkEvent
+
+		topk     dbpkg.TopkEvent
+		topkTime time.Time
+	)
+	_, err = pgx.ForEachRow(rows, []any{&topk.Event.ID, &topk.Event.Name, &topkTime, &topk.Event.URL, &topk.RSVPs}, func() error {
+		topk.Event.Time = topkTime.UnixMilli()
+		topks = append(topks, topk)
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("could not query topk events: %w", err)
+	}
+
+	return topks, nil
+
 }
 
 func (db *DB) Close() {

@@ -4,6 +4,7 @@ package postgres_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype/zeronull"
 	"github.com/stretchr/testify/require"
 
+	dbpkg "github.com/oizgagin/ing/pkg/db"
 	"github.com/oizgagin/ing/pkg/db/postgres"
 	"github.com/oizgagin/ing/pkg/rsvps"
 )
@@ -74,6 +76,109 @@ func TestDB_SaveRSVP(t *testing.T) {
 		MemberID:   rsvp.Member.ID,
 	}
 	require.Equal(t, wantRsvp, selectRsvp(t, ctx, conn, rsvp.ID))
+}
+
+func TestDB_TopkEvents(t *testing.T) {
+
+	var (
+		maxTestDuration = time.Minute
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), maxTestDuration)
+	defer cancel()
+
+	db, _, tearDown := setUp(t, ctx)
+	defer tearDown()
+
+	rsvp := rsvps.RSVP{
+		Guests:     1,
+		Visibility: "public",
+		Response:   "yes",
+		Venue:      rsvps.Venue{ID: 2001, Name: "venue_name1", Lat: 21, Lon: 22},
+		Member:     rsvps.Member{ID: 3001, Name: "member_name1", Photo: "member_photo1"},
+		Group: rsvps.Group{
+			ID:      5001,
+			Name:    "group_name1",
+			Country: "US",
+			State:   "",
+			City:    "group_city1",
+			Lat:     51,
+			Lon:     52,
+			Urlname: "group_urlname1",
+			Topics: []rsvps.GroupTopic{
+				{Urlkey: "group_urlkey1", TopicName: "group_topicname1"},
+			},
+		},
+	}
+
+	eventCounters := map[string]uint{
+		"event_id1": 10,
+		"event_id2": 20,
+		"event_id3": 21,
+		"event_id4": 30,
+		"event_id5": 31,
+		"event_id6": 40,
+		"event_id7": 41,
+	}
+
+	day1 := time.Date(2023, 3, 4, 12, 30, 50, 0, time.UTC)
+	day2 := time.Date(2023, 3, 5, 12, 30, 50, 0, time.UTC)
+
+	rsvpDates := map[string]time.Time{
+		"event_id1": day1,
+		"event_id2": day2,
+		"event_id3": day1,
+		"event_id4": day2,
+		"event_id5": day1,
+		"event_id6": day2,
+		"event_id7": day1,
+	}
+
+	for i := 1; i <= 7; i++ {
+		eventID := fmt.Sprintf("event_id%d", i)
+
+		for j := 0; j < int(eventCounters[eventID]); j++ {
+			currRsvp := rsvp
+
+			currRsvp.ID = int64(i*1e7 + j)
+			currRsvp.Mtime = rsvpDates[eventID].UnixMilli()
+			currRsvp.Event = rsvps.Event{
+				ID:   eventID,
+				Name: fmt.Sprintf("event_name%d", i),
+				URL:  fmt.Sprintf("event_url%d", i),
+				Time: rsvpDates[eventID].UnixMilli(),
+			}
+
+			err := db.SaveRSVP(ctx, currRsvp)
+			require.NoError(t, err)
+		}
+	}
+
+	topks1, err := db.TopkEvents(ctx, day1, 2)
+	require.NoError(t, err)
+	require.Equal(t, []dbpkg.TopkEvent{
+		{
+			Event: rsvps.Event{ID: "event_id7", Name: "event_name7", URL: "event_url7", Time: day1.UnixMilli()},
+			RSVPs: eventCounters["event_id7"],
+		},
+		{
+			Event: rsvps.Event{ID: "event_id5", Name: "event_name5", URL: "event_url5", Time: day1.UnixMilli()},
+			RSVPs: eventCounters["event_id5"],
+		},
+	}, topks1)
+
+	topks2, err := db.TopkEvents(ctx, day2, 2)
+	require.NoError(t, err)
+	require.Equal(t, []dbpkg.TopkEvent{
+		{
+			Event: rsvps.Event{ID: "event_id6", Name: "event_name6", URL: "event_url6", Time: day2.UnixMilli()},
+			RSVPs: eventCounters["event_id6"],
+		},
+		{
+			Event: rsvps.Event{ID: "event_id4", Name: "event_name4", URL: "event_url4", Time: day2.UnixMilli()},
+			RSVPs: eventCounters["event_id4"],
+		},
+	}, topks2)
 }
 
 func setUp(t *testing.T, ctx context.Context) (*postgres.DB, *pgx.Conn, func()) {
