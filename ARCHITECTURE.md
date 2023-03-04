@@ -15,7 +15,7 @@ In general, I've tried to sketch some basic skeleton, but with ability to scale 
 
 # "PRODUCTION-READINESS"
 
-1. e2e tests (or maybe better term is "integration tests") and unit tests on some important parts of code (intentionally not full coverage, just enough to be sure that it works);
+1. e2e tests (or maybe better term is "integration tests") and unit tests on some important parts of code (intentionally not full coverage, just enough to be sure that it works at least in happy-path);
 
 2. config (just for fun added simple secrets parsing from env), logs and metrics;
 
@@ -38,6 +38,8 @@ In general, I've tried to sketch some basic skeleton, but with ability to scale 
 
 4. maybe prevent possible inconsistencies in stored event details (imagine the situation when we've got several rsvps to the same event but with conflicting group/venue info), currently it's not supported;
 
-4. maybe store rsvps in columnar or in document-oriented (MongoDB);
+5. maybe store rsvps in columnar or in document-oriented (MongoDB);
 
-5. maybe use timeseries database for counters (i.e. TimescaleDB).
+6. maybe use timeseries database for counters (i.e. TimescaleDB);
+
+7. implement bulk inserts.
