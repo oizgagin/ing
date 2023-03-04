@@ -19,6 +19,7 @@ type TopkEvent struct {
 }
 
 type EventInfo struct {
-	Group rsvps.Group
-	Venue rsvps.Venue
+	Group          rsvps.Group
+	Venue          rsvps.Venue
+	ConfirmedRSVPs int
 }

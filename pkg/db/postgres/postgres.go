@@ -60,18 +60,6 @@ func (db *DB) SaveRSVP(ctx context.Context, rsvp rsvps.RSVP) error {
 
 	_, err = tx.Exec(ctx, `
 		INSERT INTO
-			events (id, name, time, url)
-		VALUES
-			($1, $2, $3, $4)
-		ON CONFLICT (id) DO NOTHING
-	`, rsvp.Event.ID, rsvp.Event.Name, time.UnixMilli(rsvp.Event.Time).UTC(), rsvp.Event.URL)
-
-	if err != nil {
-		return fmt.Errorf("could not insert event: %w", err)
-	}
-
-	_, err = tx.Exec(ctx, `
-		INSERT INTO
 			venues (id, name, lat, lon)
 		VALUES
 			($1, $2, $3, $4)
@@ -115,13 +103,32 @@ func (db *DB) SaveRSVP(ctx context.Context, rsvp rsvps.RSVP) error {
 		return fmt.Errorf("could not insert member: %w", err)
 	}
 
+	_, err = tx.Exec(ctx, `
+		INSERT INTO
+			events (id, name, time, url, venue_id, group_id, member_id)
+		VALUES
+			($1, $2, $3, $4, $5, $6, $7)
+		ON CONFLICT (id) DO NOTHING
+	`,
+		rsvp.Event.ID,
+		rsvp.Event.Name,
+		time.UnixMilli(rsvp.Event.Time).UTC(),
+		rsvp.Event.URL,
+		rsvp.Venue.ID,
+		rsvp.Group.ID,
+		rsvp.Member.ID,
+	)
+	if err != nil {
+		return fmt.Errorf("could not insert event: %w", err)
+	}
+
 	rsvpResponse := rsvp.Response == "yes"
 
 	_, err = tx.Exec(ctx, `
 		INSERT INTO
-			rsvps (id, mtime, guests, response, visibility, event_id, venue_id, group_id, member_id)
+			rsvps (id, mtime, guests, response, visibility, event_id)
 		VALUES
-			($1, $2, $3, $4, $5, $6, $7, $8, $9)
+			($1, $2, $3, $4, $5, $6)
 	`,
 		rsvp.ID,
 		time.UnixMilli(rsvp.Mtime).UTC(),
@@ -129,9 +136,6 @@ func (db *DB) SaveRSVP(ctx context.Context, rsvp rsvps.RSVP) error {
 		rsvpResponse,
 		rsvp.Visibility,
 		rsvp.Event.ID,
-		rsvp.Venue.ID,
-		rsvp.Group.ID,
-		rsvp.Member.ID,
 	)
 
 	if err != nil {

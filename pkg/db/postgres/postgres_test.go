@@ -61,8 +61,18 @@ func TestDB_SaveRSVP(t *testing.T) {
 
 	require.Equal(t, rsvp.Venue, selectVenue(t, ctx, conn, rsvp.Venue.ID))
 	require.Equal(t, rsvp.Member, selectMember(t, ctx, conn, rsvp.Member.ID))
-	require.Equal(t, rsvp.Event, selectEvent(t, ctx, conn, rsvp.Event.ID))
 	require.Equal(t, rsvp.Group, selectGroup(t, ctx, conn, rsvp.Group.ID))
+
+	wantEvent := dbEvent{
+		ID:       rsvp.Event.ID,
+		Name:     rsvp.Event.Name,
+		Time:     rsvp.Event.Time,
+		URL:      rsvp.Event.URL,
+		VenueID:  rsvp.Venue.ID,
+		GroupID:  rsvp.Group.ID,
+		MemberID: rsvp.Member.ID,
+	}
+	require.Equal(t, wantEvent, selectEvent(t, ctx, conn, rsvp.Event.ID))
 
 	wantRsvp := dbRsvp{
 		ID:         rsvp.ID,
@@ -71,9 +81,6 @@ func TestDB_SaveRSVP(t *testing.T) {
 		Response:   rsvp.Response,
 		Visibility: rsvp.Visibility,
 		EventID:    rsvp.Event.ID,
-		VenueID:    rsvp.Venue.ID,
-		GroupID:    rsvp.Group.ID,
-		MemberID:   rsvp.Member.ID,
 	}
 	require.Equal(t, wantRsvp, selectRsvp(t, ctx, conn, rsvp.ID))
 }
@@ -237,20 +244,6 @@ func selectMember(t *testing.T, ctx context.Context, conn *pgx.Conn, memberID in
 	return
 }
 
-func selectEvent(t *testing.T, ctx context.Context, conn *pgx.Conn, eventID string) (event rsvps.Event) {
-	var eventTime time.Time
-	err := conn.QueryRow(ctx, `
-		SELECT
-			id, name, time, url
-		FROM events
-			WHERE id = $1
-	`, eventID).Scan(&event.ID, &event.Name, &eventTime, &event.URL)
-	require.NoError(t, err)
-
-	event.Time = eventTime.UnixMilli()
-	return
-}
-
 func selectGroup(t *testing.T, ctx context.Context, conn *pgx.Conn, groupID int64) (group rsvps.Group) {
 	var groupState zeronull.Text
 
@@ -276,6 +269,30 @@ func selectGroup(t *testing.T, ctx context.Context, conn *pgx.Conn, groupID int6
 	return
 }
 
+type dbEvent struct {
+	ID       string
+	Name     string
+	Time     int64
+	URL      string
+	VenueID  int64
+	GroupID  int64
+	MemberID int64
+}
+
+func selectEvent(t *testing.T, ctx context.Context, conn *pgx.Conn, eventID string) (event dbEvent) {
+	var eventTime time.Time
+	err := conn.QueryRow(ctx, `
+		SELECT
+			id, name, time, url, venue_id, group_id, member_id
+		FROM events
+			WHERE id = $1
+	`, eventID).Scan(&event.ID, &event.Name, &eventTime, &event.URL, &event.VenueID, &event.GroupID, &event.MemberID)
+
+	require.NoError(t, err)
+	event.Time = eventTime.UnixMilli()
+	return
+}
+
 type dbRsvp struct {
 	ID         int64
 	Mtime      int64
@@ -283,9 +300,6 @@ type dbRsvp struct {
 	Response   string
 	Visibility string
 	EventID    string
-	VenueID    int64
-	GroupID    int64
-	MemberID   int64
 }
 
 func selectRsvp(t *testing.T, ctx context.Context, conn *pgx.Conn, rsvpID int64) (rsvp dbRsvp) {
@@ -296,7 +310,7 @@ func selectRsvp(t *testing.T, ctx context.Context, conn *pgx.Conn, rsvpID int64)
 
 	err := conn.QueryRow(ctx, `
 		SELECT
-			id, mtime, guests, response, visibility, event_id, venue_id, group_id, member_id
+			id, mtime, guests, response, visibility, event_id
 		FROM rsvps
 			WHERE id = $1
 	`, rsvpID).Scan(
@@ -306,9 +320,6 @@ func selectRsvp(t *testing.T, ctx context.Context, conn *pgx.Conn, rsvpID int64)
 		&rsvpResponse,
 		&rsvp.Visibility,
 		&rsvp.EventID,
-		&rsvp.VenueID,
-		&rsvp.GroupID,
-		&rsvp.MemberID,
 	)
 
 	require.NoError(t, err)
