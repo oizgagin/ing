@@ -231,7 +231,7 @@ func TestDB_GetEventInfo(t *testing.T) {
 
 	info, err := db.GetEventInfo(ctx, "event_id1")
 	require.NoError(t, err)
-	require.Equal(t, rsvps.EventInfo{Venue: rsvp.Venue, Group: rsvp.Group, ConfirmedRSVPs: 1}, info)
+	require.Equal(t, rsvps.EventInfo{Venue: rsvp.Venue, Group: rsvp.Group}, info)
 }
 
 func setUp(t *testing.T, ctx context.Context) (*postgres.DB, *pgx.Conn, func()) {

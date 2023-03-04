@@ -19,6 +19,9 @@ test-e2e: test-e2e-down
 		ING_E2E_POSTGRES_USER=ing_user \
 		ING_E2E_POSTGRES_PASS=ing_pass \
 		ING_E2E_POSTGRES_DB=ing \
+		ING_E2E_REDIS_ADDRS=localhost:6379,localhost:6380,localhost:6381 \
+		ING_E2E_REDIS_USER=ing_user \
+		ING_E2E_REDIS_PASS=ing_pass \
 			go test -count=1 -v -tags=e2e ./... \
 		|| \
 		docker-compose -f docker-compose-e2e.yml down \

@@ -51,7 +51,6 @@ type GroupTopic struct {
 }
 
 type EventInfo struct {
-	Group          Group
-	Venue          Venue
-	ConfirmedRSVPs int
+	Group Group
+	Venue Venue
 }

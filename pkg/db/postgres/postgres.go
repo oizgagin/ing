@@ -224,8 +224,7 @@ func (db *DB) GetEventInfo(ctx context.Context, eventID string) (rsvps.EventInfo
 			venues.id,
 			venues.name,
 			venues.lat,
-			venues.lon,
-			(SELECT SUM(confirmed_rsvps) FROM event_counters WHERE event_id = $1)
+			venues.lon
 		FROM
 			events
 				INNER JOIN groups ON events.group_id = groups.id
@@ -246,7 +245,6 @@ func (db *DB) GetEventInfo(ctx context.Context, eventID string) (rsvps.EventInfo
 		&eventInfo.Venue.Name,
 		&eventInfo.Venue.Lat,
 		&eventInfo.Venue.Lon,
-		&eventInfo.ConfirmedRSVPs,
 	)
 
 	if err != nil {
