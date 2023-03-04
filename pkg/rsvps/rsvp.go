@@ -34,16 +34,18 @@ type Event struct {
 }
 
 type Group struct {
-	ID      int64   `json:"group_id"`
-	Name    string  `json:"group_name"`
-	Country string  `json:"group_country"`
-	State   string  `json:"state"`
-	City    string  `json:"city"`
-	Lat     float64 `json:"group_lat"`
-	Lon     float64 `json:"group_lon"`
-	Urlname string  `json:"group_urlname"`
-	Topics  []struct {
-		Urlkey    string `json:"urlkey"`
-		TopicName string `json:"topic_name"`
-	} `json:"topics"`
+	ID      int64        `json:"group_id"`
+	Name    string       `json:"group_name"`
+	Country string       `json:"group_country"`
+	State   string       `json:"state"`
+	City    string       `json:"city"`
+	Lat     float64      `json:"group_lat"`
+	Lon     float64      `json:"group_lon"`
+	Urlname string       `json:"group_urlname"`
+	Topics  []GroupTopic `json:"topics"`
+}
+
+type GroupTopic struct {
+	Urlkey    string `json:"urlkey"`
+	TopicName string `json:"topic_name"`
 }

@@ -62,9 +62,9 @@ CREATE TABLE IF NOT EXISTS rsvps (
 CREATE TABLE IF NOT EXISTS event_counters (
     rsvp_date date NOT NULL,
     event_id varchar(100) NOT NULL,
-    received_rvsps integer NOT NULL,
+    received_rsvps integer NOT NULL,
     PRIMARY KEY (rsvp_date, event_id),
     CONSTRAINT fk_event_id FOREIGN KEY (event_id) REFERENCES events(id)
 );
 
-CREATE INDEX event_counters_received_rsvps_idx ON event_counters (received_rvsps DESC);
+CREATE INDEX event_counters_received_rsvps_idx ON event_counters (received_rsvps DESC);
