@@ -15,7 +15,7 @@ In general, I've tried to sketch some basic skeleton, but with ability to scale 
 
 # "PRODUCTION-READINESS"
 
-1. e2e tests (or maybe better term is "integration tests") and unit tests on some important parts of code;
+1. e2e tests (or maybe better term is "integration tests") and unit tests on some important parts of code (intentionally not full coverage, just enough to be sure that it works);
 
 2. config (just for fun added simple secrets parsing from env), logs and metrics;
 
