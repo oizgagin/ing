@@ -6,11 +6,11 @@ In general, I've tried to sketch some basic skeleton, but with ability to scale 
 
 2. persistance is implemented on top of PostgreSQL;
 
-3. redis to cache top k events at given date;
+3. redis to cache event info;
 
-4. k is dynamic (passed in request);
+4. for top k events request is dynamic (passed in request);
 
-5. only rsvps with "yes" response are considered when updating counters.
+5. only rsvps with "yes" response are considered when calculating top k events.
 
 
 # "PRODUCTION-READINESS"
@@ -32,11 +32,11 @@ In general, I've tried to sketch some basic skeleton, but with ability to scale 
 
 1. add de-duplication logic for rsvps on receiving side (maybe have another redis for deduplication by rsvp_id, or maybe some more complex and reliable approach);
 
-2. calculate top k on-the-fly (i.e. topk in Redis Stack, ensure fault-tolerancy with replication, enable redis persistency (?))
+2. calculate top k on-the-fly (i.e. topk in Redis Stack, in that case we have to ensure fault-tolerancy with replication, maybe enable redis persistency);
 
-3. use some sort of sharding in rsvps table (for instance, have consistent hashing and shard by rsvp_id, interesting here is ways to deal with hotspots, i.e. popular events);
+3. use some sort of sharding (for instance, shard rsvps table by rsvp_id);
 
-4. maybe prevent possible inconsistencies in stored event details (imagine the situation when we've got several rsvps to the same event but with conflicting group/venue info);
+4. maybe prevent possible inconsistencies in stored event details (imagine the situation when we've got several rsvps to the same event but with conflicting group/venue info), currently it's not supported;
 
 4. maybe store rsvps in columnar or in document-oriented (MongoDB);
 
