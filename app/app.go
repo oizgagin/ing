@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -46,12 +44,6 @@ type App struct {
 }
 
 func NewApp(cfg Config) (*App, error) {
-	sigCh := make(chan os.Signal, 1)
-
-	go func() {
-		signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-		<-sigCh
-	}()
 
 	l, err := buildLogger(cfg.App.LogLevel, cfg.App.Output)
 	if err != nil {
@@ -86,23 +78,12 @@ func NewApp(cfg Config) (*App, error) {
 		server:  server,
 	}
 
-	go func() {
-		<-sigCh
-
-		l.Info("got signal to exit, stopping application")
-
-		if err := app.Close(); err != nil {
-			l.Error("could not close app cleanly", zap.Error(err))
-			return
-		}
-
-		l.Info("application stopped")
-	}()
-
 	return &app, nil
 }
 
 func (app *App) Close() error {
+	app.l.Info("closing application")
+
 	app.handler.Stop()
 
 	var errs []error
@@ -112,7 +93,15 @@ func (app *App) Close() error {
 	errs = append(errs, app.stream.Close())
 	errs = append(errs, app.cache.Close())
 
-	return errors.Join(errs...)
+	err := errors.Join(errs...)
+
+	if err != nil {
+		app.l.Error("close application error", zap.Error(err))
+		return err
+	}
+
+	app.l.Info("application closed")
+	return nil
 }
 
 func buildLogger(level, output string) (*zap.Logger, error) {

@@ -3,56 +3,38 @@ package config
 import (
 	"os"
 	"testing"
-	"time"
 
-	configtypes "github.com/oizgagin/ing/pkg/config/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestParseConfig(t *testing.T) {
 
+	type cfg struct {
+		DB struct {
+			User string `toml:"user"`
+			Pass string `toml:"pass"`
+		} `toml:"db"`
+	}
+
 	raw := `
-		[kafka]
-		brokers = [ "broker1:9092", "broker2:9092", "broker3:9092" ]
-		topic = "rsvps"
-		consumer_group = "rsvps_consumer_group"
-		autocommit_interval = "30s"
-		session_timeout = "30s"
-
-		[redis]
-		addrs = [ "redis1:7000", "redis2:7000", "redis3:7000" ]
-		user = "rsvps_redis_user"
-		pass = "{% ENV:REDIS_PASS %}"
-
-		[postgres]
-		addr = "postgres1:5432"
-		user = "rsvps_postgres_user"
-		pass = "{% ENV:POSTGRES_PASS %}"
-		dbname = "rsvps"
+		[db]
+		user = "ing_user"
+		pass = "{% ENV:ING_E2E_TEST_PASS %}"
 	`
 
-	t.Setenv("REDIS_PASS", "rsvps_redis_pass")
-	t.Setenv("POSTGRES_PASS", "rsvps_postgres_pass")
+	t.Setenv("ING_E2E_TEST_PASS", "ing_pass")
 
 	filename, tearDown := setUp(t, raw)
 	defer tearDown()
 
-	got, err := ParseFile(filename)
+	var got cfg
+
+	err := ParseFile(filename, &got)
 	assert.NoError(t, err)
 
-	want := Config{}
-	want.Kafka.Brokers = []string{"broker1:9092", "broker2:9092", "broker3:9092"}
-	want.Kafka.Topic = "rsvps"
-	want.Kafka.ConsumerGroup = "rsvps_consumer_group"
-	want.Kafka.AutocommitInterval = configtypes.Duration{Duration: 30 * time.Second}
-	want.Kafka.SessionTimeout = configtypes.Duration{Duration: 30 * time.Second}
-	want.Redis.Addrs = []string{"redis1:7000", "redis2:7000", "redis3:7000"}
-	want.Redis.User = "rsvps_redis_user"
-	want.Redis.Pass = "rsvps_redis_pass"
-	want.Postgres.Addr = "postgres1:5432"
-	want.Postgres.User = "rsvps_postgres_user"
-	want.Postgres.Pass = "rsvps_postgres_pass"
-	want.Postgres.DBName = "rsvps"
+	want := cfg{}
+	want.DB.User = "ing_user"
+	want.DB.Pass = "ing_pass"
 
 	assert.Equal(t, want, got)
 }
