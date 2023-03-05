@@ -37,7 +37,7 @@ All in all it was fun excerise, and I got a chance to try some libraries I wante
 
 2. use some sort of sharding (for instance, shard rsvps table by rsvp_id);
 
-3. maybe prevent possible inconsistencies in stored event details (imagine the situation when we've got several rsvps to the same event but with conflicting group/venue info), currently first received info about info is stored;
+3. maybe prevent possible inconsistencies in stored event details (imagine the situation when we've got several rsvps to the same event but with conflicting group/venue info), currently first received info about event is stored and never changes since;
 
 4. maybe store rsvps in columnar or in document-oriented (MongoDB);
 
