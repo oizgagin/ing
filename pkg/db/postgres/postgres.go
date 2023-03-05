@@ -33,7 +33,8 @@ func (c Config) URL() string {
 }
 
 type DB struct {
-	pool *pgxpool.Pool
+	pool      *pgxpool.Pool
+	ctxCancel func()
 }
 
 func NewDB(cfg Config) (*DB, error) {
@@ -49,7 +50,13 @@ func NewDB(cfg Config) (*DB, error) {
 		return nil, fmt.Errorf("could not ping pg: %w", err)
 	}
 
-	return &DB{pool: pool}, nil
+	ctx, cancel := context.WithCancel(context.Background())
+
+	db := &DB{pool: pool, ctxCancel: cancel}
+
+	go db.metrics(ctx)
+
+	return db, nil
 }
 
 func (db *DB) SaveRSVP(ctx context.Context, rsvp rsvps.RSVP) error {
@@ -261,4 +268,28 @@ func (db *DB) GetEventInfo(ctx context.Context, eventID string) (rsvps.EventInfo
 
 func (db *DB) Close() {
 	db.pool.Close()
+}
+
+func (db *DB) metrics(ctx context.Context) {
+	for {
+		stats := db.pool.Stat()
+
+		pgpoolAcquireCount.Set(uint64(stats.AcquireCount()))
+		pgpoolAcquiredConns.Set(uint64(stats.AcquiredConns()))
+		pgpoolCanceledAcquireCount.Set(uint64(stats.CanceledAcquireCount()))
+		pgpoolConstructingConns.Set(uint64(stats.ConstructingConns()))
+		pgpoolEmptyAcquireCount.Set(uint64(stats.EmptyAcquireCount()))
+		pgpoolIdleConns.Set(uint64(stats.IdleConns()))
+		pgpoolMaxConns.Set(uint64(stats.MaxConns()))
+		pgpoolTotalConns.Set(uint64(stats.TotalConns()))
+		pgpoolNewConnsCount.Set(uint64(stats.NewConnsCount()))
+		pgpoolMaxLifetimeDestroyCount.Set(uint64(stats.MaxLifetimeDestroyCount()))
+		pgpoolMaxIdleDestroyCount.Set(uint64(stats.MaxIdleDestroyCount()))
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(30 * time.Second):
+		}
+	}
 }
