@@ -34,6 +34,10 @@ All in all it was fun excerise, and I got a chance to try some libraries I wante
 
 7. only two API methods (GetTopkEvents / GetEventInfo) are exposed, decided to go with HTTP+JSON instead of something like gRPC for speed, also no routing logic needed - so no router and grouping handlers by API versions, etc.
 
+# PREREQUISITES
+
+1. [mockery](https://vektra.github.io/mockery/installation/) to generate mocks.
+
 # WAYS TO IMPROVE FURTHER
 
 1. calculate top k inaccurately but on-the-fly (i.e. topk in Redis Stack, in that case we have to ensure fault-tolerancy with replication, maybe enable redis persistency), in addition to storing rsvps somewhere persistently (though it increases operational costs, and also limits possible values of `k`);

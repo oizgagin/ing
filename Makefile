@@ -1,3 +1,7 @@
+.PHONY: go-generate
+go-generate:
+	go generate ./...
+
 .PHONY: test
 test:
 	go test -count=1 -v ./...

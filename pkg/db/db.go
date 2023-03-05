@@ -8,6 +8,7 @@ import (
 	"github.com/oizgagin/ing/pkg/rsvps"
 )
 
+//go:generate mockery --name DB
 type DB interface {
 	SaveRSVP(ctx context.Context, rsvp rsvps.RSVP) error
 	TopkEvents(ctx context.Context, date time.Time, k uint) ([]TopkEvent, error)
