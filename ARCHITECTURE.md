@@ -12,8 +12,9 @@ In general, I've tried to sketch some basic (having only "interesting" parts) sk
 
 5. only rsvps with "yes" response are considered when calculating top k events;
 
-6. simple methods for getting member/group/revenue info by its id are omitted (they're very simple).
+6. trivial methods for getting member/group/revenue info by its id are omitted.
 
+All in all it was fun excerise, and I got a chance to try some libraries I wanted to touch for some time (in particular segmentio/kafka-go instead of my usual Shopify/sarama, jack/pgx instead of lib/pq).
 
 # "PRODUCTION-READINESS"
 
@@ -27,23 +28,21 @@ In general, I've tried to sketch some basic (having only "interesting" parts) sk
 
 5. assumption of the single postgres instance (i.e. no replication, no sharding) running (though in codebase persistance is hidden under interface, so it should be easy to add) - deciced to not go with multilple instances for speed, some possible ways to improve it is introduce sharding rsvps by rsvp_ids, route read requests to read-only replicas, etc.;
 
-6. redis-ring with 3 nodes is used, since it's relatively easy to setup and implement in code.
+6. redis-ring with 3 nodes is used, also just for fun.
 
 
 # WAYS TO IMPROVE FURTHER
 
-1. add de-duplication logic for rsvps on receiving side (maybe have another redis for deduplication by rsvp_id, or maybe some more complex and reliable approach);
+1. calculate top k on-the-fly (i.e. topk in Redis Stack, in that case we have to ensure fault-tolerancy with replication, maybe enable redis persistency), though it increases operational costs (have to keep in sync persistent db and in-memory);
 
-2. calculate top k on-the-fly (i.e. topk in Redis Stack, in that case we have to ensure fault-tolerancy with replication, maybe enable redis persistency);
+2. use some sort of sharding (for instance, shard rsvps table by rsvp_id);
 
-3. use some sort of sharding (for instance, shard rsvps table by rsvp_id);
+3. maybe prevent possible inconsistencies in stored event details (imagine the situation when we've got several rsvps to the same event but with conflicting group/venue info), currently first received info about info is stored;
 
-4. maybe prevent possible inconsistencies in stored event details (imagine the situation when we've got several rsvps to the same event but with conflicting group/venue info), currently first received info about info is stored;
+4. maybe store rsvps in columnar or in document-oriented (MongoDB);
 
-5. maybe store rsvps in columnar or in document-oriented (MongoDB);
+5. maybe use timeseries database for counters (i.e. TimescaleDB);
 
-6. maybe use timeseries database for counters (i.e. TimescaleDB);
+6. implement bulk inserts (maybe buffer messages on receiving side);
 
-7. implement bulk inserts;
-
-8. limit `k` parametere in Topk method.
+7. limit `k` parametere in Topk method.
