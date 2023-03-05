@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -30,15 +31,20 @@ type Server struct {
 	db         db.DB
 	eventCache cache.EventInfoCache
 
+	ln              net.Listener
 	srv             *http.Server
 	shutdownTimeout time.Duration
 	cacheTTL        time.Duration
 	cacheSetTimeout time.Duration
 }
 
-func NewServer(cfg Config, l *zap.Logger, db db.DB, eventCache cache.EventInfoCache) *Server {
+func NewServer(cfg Config, l *zap.Logger, db db.DB, eventCache cache.EventInfoCache) (*Server, error) {
+	ln, err := net.Listen("tcp", cfg.Addr)
+	if err != nil {
+		return nil, fmt.Errorf("could not start listening on %v: %w", cfg.Addr, err)
+	}
+
 	srv := &http.Server{
-		Addr:         cfg.Addr,
 		ReadTimeout:  cfg.ReadTimeout.Duration,
 		WriteTimeout: cfg.WriteTimeout.Duration,
 	}
@@ -56,13 +62,13 @@ func NewServer(cfg Config, l *zap.Logger, db db.DB, eventCache cache.EventInfoCa
 	srv.Handler = &server
 
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
-			l.Error("could not start http server", zap.Error(err))
+		if err := srv.Serve(ln); err != nil && err != http.ErrServerClosed {
+			l.Error("http serve error", zap.Error(err))
 			utils.StopApp()
 		}
 	}()
 
-	return &server
+	return &server, nil
 }
 
 func (s *Server) Close() error {
@@ -116,13 +122,13 @@ func (s *Server) handleEventsTopk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Add("Content-Type", "application/json")
+
 	if err := json.NewEncoder(w).Encode(topk); err != nil {
 		l.Error("could not write response", zap.Error(err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Add("Content-Type", "application/json")
 }
 
 func (s *Server) handleEventsInfo(w http.ResponseWriter, r *http.Request) {
@@ -147,21 +153,24 @@ func (s *Server) handleEventsInfo(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		go func() {
-			setCtx, setCancel := context.WithTimeout(context.Background(), s.cacheSetTimeout)
-			defer setCancel()
+		// TODO: maybe set this in goroutine
+		setCtx, setCancel := context.WithTimeout(context.Background(), s.cacheSetTimeout)
+		defer setCancel()
 
-			if err := s.eventCache.Set(setCtx, eventID, info, s.cacheTTL); err != nil {
-				l.Error("could not cache event info", zap.Error(err))
-			}
-		}()
+		if err := s.eventCache.Set(setCtx, eventID, info, s.cacheTTL); err != nil {
+			l.Error("could not cache event info", zap.Error(err))
+		}
 	}
+
+	w.Header().Add("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(info); err != nil {
 		l.Error("could not write response", zap.Error(err))
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
+}
 
-	w.Header().Add("Content-Type", "application/json")
+func (s *Server) Addr() net.Addr {
+	return s.ln.Addr()
 }
