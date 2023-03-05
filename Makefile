@@ -38,4 +38,16 @@ test-e2e: test-e2e-down
 
 .PHONY: image
 image:
-	docker build -t oizgagin/ing:latest .
+	docker build -f Dockerfile -t oizgagin/ing:latest .
+
+.PHONY: image-dev
+image-dev:
+	docker build -f Dockerfile.dev -t oizgagin/ing-dev:latest .
+
+.PHONY: dev-down
+dev-down:
+	docker-compose -f docker-compose-dev.yml down
+
+.PHONY: dev-up
+dev-up: dev-down
+	docker-compose -f docker-compose-dev.yml up -d

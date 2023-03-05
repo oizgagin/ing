@@ -32,15 +32,25 @@ All in all it was fun excerise, and I got a chance to try some libraries I wante
 
 6. redis-ring with 3 nodes is used, also just for fun;
 
-7. only two API methods (GetTopkEvents / GetEventInfo) are exposed, decided to go with HTTP+JSON instead of something like gRPC for speed, also no routing logic needed - so no router and grouping handlers by API versions, etc.
+7. only two API methods (GetTopkEvents / GetEventInfo) are exposed, decided to go with HTTP+JSON instead of something like gRPC for speed, also no routing logic needed - so no router, grouping handlers by API versions, etc.
 
 # PREREQUISITES
 
 1. [mockery](https://vektra.github.io/mockery/installation/) to generate mocks.
 
+# HOW TO
+
+1. run locally: `make dev-up`;
+
+2. run e2e tests: `make tests-e2e`;
+
+3. build release image: `make image`;
+
+4. build dev image: `make image-dev`.
+
 # WAYS TO IMPROVE FURTHER
 
-1. calculate top k inaccurately but on-the-fly (i.e. topk in Redis Stack, in that case we have to ensure fault-tolerancy with replication, maybe enable redis persistency), in addition to storing rsvps somewhere persistently (though it increases operational costs, and also limits possible values of `k`);
+1. calculate top k inaccurately but on-the-fly with small memory footprint (i.e. topk in Redis Stack, in that case we have to ensure fault-tolerancy with replication, maybe enable redis persistency), in addition to storing rsvps somewhere persistently (though it increases operational costs, and also limits possible values of `k`);
 
 2. use some sort of sharding (for instance, shard rsvps table by rsvp_id);
 

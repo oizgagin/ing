@@ -1,0 +1,41 @@
+[app]
+output = "stdout"
+log_level = "debug"
+metric_addr = ":8081"
+
+[kafka]
+brokers = ["broker:9092"]
+topic = "ing_rsvps"
+consumer_group = "ing_rsvps_consumergroup"
+session_timeout = "1m"
+autocommit_interval = "30s"
+
+[postgres]
+addr = "postgres:5432"
+user = "ing_user"
+pass = "ing_pass"
+dbname = "ing"
+
+[redis-ring]
+addrs = ["redis1:6379", "redis2:6379", "redis3:6379"]
+user = "ing_user"
+pass = "ing_pass"
+db = 0
+dial_timeout = "1s"
+read_timeout = "100ms"
+write_timeout = "1ms"
+pool_size = 10
+min_idle_conns = 1
+max_idle_conns = 2
+
+[rsvp-handler]
+workers = 10
+save_timeout = "1s"
+
+[server]
+addr = ":8080"
+read_timeout = "1s"
+write_timeout = "30s"
+shutdown_timeout = "10s"
+cache_ttl = "2h"
+cache_set_timeout = "1s"
