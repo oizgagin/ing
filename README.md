@@ -1,6 +1,6 @@
 # OVERVIEW
 
-In general, I've tried to sketch some basic (having only "interesting" parts) skeleton, but with ability to scale it if needed.
+In general, I've tried to sketch some basic (having only "interesting" parts) skeleton, just to demonstrate familiarity with some basic software engineering concepts. I've outlined several ways to scale this solution further below. Overview:
 
 1. rsvps are coming from Kafka;
 
@@ -12,7 +12,9 @@ In general, I've tried to sketch some basic (having only "interesting" parts) sk
 
 5. only rsvps with "yes" response are considered when calculating top k events;
 
-6. trivial methods for getting member/group/revenue info by its id are omitted.
+6. trivial methods for getting member/group/revenue info by its id are omitted;
+
+7. topk is calculated precisely via PostgreSQL.
 
 All in all it was fun excerise, and I got a chance to try some libraries I wanted to touch for some time (in particular segmentio/kafka-go instead of my usual Shopify/sarama, jack/pgx instead of lib/pq).
 
@@ -28,21 +30,24 @@ All in all it was fun excerise, and I got a chance to try some libraries I wante
 
 5. assumption of the single postgres instance (i.e. no replication, no sharding) running (though in codebase persistance is hidden under interface, so it should be easy to add) - deciced to not go with multilple instances for speed, some possible ways to improve it is introduce sharding rsvps by rsvp_ids, route read requests to read-only replicas, etc.;
 
-6. redis-ring with 3 nodes is used, also just for fun.
+6. redis-ring with 3 nodes is used, also just for fun;
 
+7. only two API methods (GetTopkEvents / GetEventInfo) are exposed, decided to go with HTTP+JSON instead of something like gRPC for speed, also no routing logic needed - so no router and grouping handlers by API versions, etc.
 
 # WAYS TO IMPROVE FURTHER
 
-1. calculate top k on-the-fly (i.e. topk in Redis Stack, in that case we have to ensure fault-tolerancy with replication, maybe enable redis persistency), though it increases operational costs (have to keep in sync persistent db and in-memory);
+1. calculate top k inaccurately but on-the-fly (i.e. topk in Redis Stack, in that case we have to ensure fault-tolerancy with replication, maybe enable redis persistency), in addition to storing rsvps somewhere persistently (though it increases operational costs, and also limits possible values of `k`);
 
 2. use some sort of sharding (for instance, shard rsvps table by rsvp_id);
 
-3. maybe prevent possible inconsistencies in stored event details (imagine the situation when we've got several rsvps to the same event but with conflicting group/venue info), currently first received info about event is stored and never changes since;
+3. maybe somehow signal about inconsistencies in stored event details (imagine the situation when we've got several rsvps to the same event but with conflicting group/venue info), currently first received info about event is stored and never changes since;
 
-4. maybe store rsvps in columnar or in document-oriented (MongoDB);
+4. maybe store rsvps in columnar or in document-oriented db;
 
-5. maybe use timeseries database for counters (i.e. TimescaleDB);
+5. maybe store rsvps in HDFS and calculate topk via some map-reduce jobs;
 
-6. implement bulk inserts (maybe buffer messages on receiving side);
+6. maybe use timeseries database for counters (i.e. TimescaleDB);
 
-7. limit `k` parametere in Topk method.
+7. implement bulk inserts (maybe buffer messages on receiving side);
+
+8. limit `k` parameter in Topk method.
