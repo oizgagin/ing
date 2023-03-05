@@ -66,8 +66,6 @@ func TestStream(t *testing.T) {
 	sort.Slice(wantRsvps, func(i, j int) bool { return cmpRsvp(wantRsvps[i], wantRsvps[j]) })
 
 	require.Equal(t, wantRsvps, gotRsvps)
-	require.Equal(t, len(rawRsvps), int(stream.TotalMsgs()))
-	require.Equal(t, len(rawRsvps)-len(wantRsvps), int(stream.InvalidMsgs()))
 }
 
 func setUp(t *testing.T, ctx context.Context, topic string) (string, *producer, *zap.Logger, []string, func(t *testing.T)) {

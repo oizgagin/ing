@@ -29,7 +29,8 @@ type Config struct {
 }
 
 type Cache struct {
-	ring *redis.Ring
+	ring      *redis.Ring
+	ctxCancel func()
 }
 
 func NewCache(cfg Config) (*Cache, error) {
@@ -45,7 +46,13 @@ func NewCache(cfg Config) (*Cache, error) {
 		return nil, fmt.Errorf("could not ping redis ring: %w", err)
 	}
 
-	return &Cache{ring: ring}, nil
+	ctx, cancel := context.WithCancel(context.Background())
+
+	cache := &Cache{ring: ring, ctxCancel: cancel}
+
+	go cache.metrics(ctx)
+
+	return cache, nil
 }
 
 var ErrNoCachedEventInfo = errors.New("no cached event info")
@@ -79,6 +86,7 @@ func (c *Cache) Set(ctx context.Context, eventID string, info rsvps.EventInfo, t
 }
 
 func (c *Cache) Close() error {
+	c.ctxCancel()
 	return c.ring.Close()
 }
 
@@ -102,4 +110,23 @@ func NewRing(cfg Config) *redis.Ring {
 		MinIdleConns: cfg.MinIdleConns,
 		MaxIdleConns: cfg.MaxIdleConns,
 	})
+}
+
+func (c *Cache) metrics(ctx context.Context) {
+	for {
+		stats := c.ring.PoolStats()
+
+		redispoolHits.Set(uint64(stats.Hits))
+		redispoolMisses.Set(uint64(stats.Misses))
+		redispoolTimeouts.Set(uint64(stats.Timeouts))
+		redispoolTotalConns.Set(uint64(stats.TotalConns))
+		redispoolIdleConns.Set(uint64(stats.IdleConns))
+		redispoolStaleConns.Set(uint64(stats.StaleConns))
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(30 * time.Second):
+		}
+	}
 }

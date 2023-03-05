@@ -34,7 +34,6 @@ type Stream struct {
 	ctxCancel func()
 
 	stats struct {
-		totalMsgs   uint64 // atomic
 		invalidMsgs uint64 // atomic
 	}
 }
@@ -76,22 +75,12 @@ func (stream *Stream) Close() error {
 	return err
 }
 
-func (stream *Stream) TotalMsgs() uint64 {
-	return atomic.LoadUint64(&stream.stats.totalMsgs)
-}
-
-func (stream *Stream) InvalidMsgs() uint64 {
-	return atomic.LoadUint64(&stream.stats.invalidMsgs)
-}
-
 func (stream *Stream) loop(ctx context.Context) {
 	for {
 		m, err := stream.r.ReadMessage(ctx)
 		if err != nil {
 			return
 		}
-
-		atomic.AddUint64(&stream.stats.totalMsgs, 1)
 
 		l := stream.l.With(
 			zap.Int("partition", m.Partition),
@@ -119,13 +108,14 @@ func (stream *Stream) metrics(ctx context.Context) {
 	for {
 		stats := stream.r.Stats()
 
-		kafkaDialsTotal.Set(uint64(stats.Dials))
-		kafkaFetchesTotal.Set(uint64(stats.Fetches))
-		kafkaMessagesTotal.Set(uint64(stats.Messages))
-		kafkaBytesTotal.Set(uint64(stats.Bytes))
-		kafkaRebalancesTotal.Set(uint64(stats.Rebalances))
-		kafkaTimeoutsTotal.Set(uint64(stats.Timeouts))
-		kafkaErrorsTotal.Set(uint64(stats.Errors))
+		kafkaDials.Set(uint64(stats.Dials))
+		kafkaFetches.Set(uint64(stats.Fetches))
+		kafkaMessages.Set(uint64(stats.Messages))
+		kafkaInvalidMessages.Set(atomic.LoadUint64(&stream.stats.invalidMsgs))
+		kafkaBytes.Set(uint64(stats.Bytes))
+		kafkaRebalances.Set(uint64(stats.Rebalances))
+		kafkaTimeouts.Set(uint64(stats.Timeouts))
+		kafkaErrors.Set(uint64(stats.Errors))
 
 		select {
 		case <-ctx.Done():
