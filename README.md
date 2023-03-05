@@ -58,6 +58,8 @@ All in all it was fun excerise, and I got a chance to try some libraries I wante
 
 9. split result service into 2: one for storing rsvps from kafka, and another one just to proivde API over persistent layer (this is how it should be done in production, at least to ease scaling each part separately);
 
-10. logging and metrics in http handlers should go in separate general middleware function;
+10. logs in http handlers should go in separate general middleware function;
 
-11. add healtchecks for app.
+11. add metrics middleware for http handlers;
+
+12. add healtchecks for app.

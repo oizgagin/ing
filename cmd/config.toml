@@ -1,6 +1,7 @@
 [app]
 output = "stderr"
 log_level = "debug"
+metric_addr = ":8081"
 
 [kafka]
 brokers = ["localhost:9092"]

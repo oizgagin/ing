@@ -19,8 +19,9 @@ import (
 )
 
 type AppConfig struct {
-	Output   string `toml:"output"`
-	LogLevel string `toml:"log_level"`
+	Output     string `toml:"output"`
+	LogLevel   string `toml:"log_level"`
+	MetricAddr string `toml:"metric_addr"`
 }
 
 type Config struct {
@@ -39,8 +40,9 @@ type App struct {
 	db     db.DB
 	cache  cache.EventInfoCache
 
-	handler *rsvphandler.Handler
-	server  *server.Server
+	handler       *rsvphandler.Handler
+	server        *server.Server
+	metricsServer *metricsServer
 }
 
 func NewApp(cfg Config) (*App, error) {
@@ -69,13 +71,16 @@ func NewApp(cfg Config) (*App, error) {
 		return nil, fmt.Errorf("could not create server: %w", err)
 	}
 
+	metricsServer := newMetricsServer(l, cfg.App.MetricAddr)
+
 	app := App{
-		l:       l,
-		stream:  stream,
-		db:      db,
-		cache:   cache,
-		handler: handler,
-		server:  server,
+		l:             l,
+		stream:        stream,
+		db:            db,
+		cache:         cache,
+		handler:       handler,
+		server:        server,
+		metricsServer: metricsServer,
 	}
 
 	return &app, nil
@@ -92,6 +97,7 @@ func (app *App) Close() error {
 	errs = append(errs, app.db.Close())
 	errs = append(errs, app.stream.Close())
 	errs = append(errs, app.cache.Close())
+	errs = append(errs, app.metricsServer.Close())
 
 	err := errors.Join(errs...)
 
