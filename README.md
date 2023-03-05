@@ -50,4 +50,8 @@ All in all it was fun excerise, and I got a chance to try some libraries I wante
 
 7. implement bulk inserts (maybe buffer messages on receiving side);
 
-8. limit `k` parameter in Topk method.
+8. limit `k` parameter in Topk method;
+
+9. split result service into 2: one for storing rsvps from kafka, and another one just to proivde API over persistent layer (this is how it should be done in production, at least to ease scaling each part separately);
+
+10. logging and metrics in http handlers should go in separate general middleware function.

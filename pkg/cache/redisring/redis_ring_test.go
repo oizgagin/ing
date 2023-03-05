@@ -12,6 +12,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
 
+	cachepkg "github.com/oizgagin/ing/pkg/cache"
 	"github.com/oizgagin/ing/pkg/cache/redisring"
 	configtypes "github.com/oizgagin/ing/pkg/config/types"
 	"github.com/oizgagin/ing/pkg/rsvps"
@@ -67,7 +68,7 @@ func TestCache_GetSet(t *testing.T) {
 
 	got2, err := cache.Get(ctx, eventID)
 	require.Equal(t, got2, rsvps.EventInfo{})
-	require.Equal(t, err, redisring.ErrNoCachedEventInfo)
+	require.Equal(t, err, cachepkg.ErrNoCachedEventInfo)
 }
 
 func setUp(t *testing.T, ctx context.Context) (*redisring.Cache, *redis.Ring, func(t *testing.T)) {

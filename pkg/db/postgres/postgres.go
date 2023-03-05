@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -209,8 +208,6 @@ func (db *DB) TopkEvents(ctx context.Context, date time.Time, k uint) ([]dbpkg.T
 	return topks, nil
 }
 
-var ErrNoEvents = errors.New("no events in result set")
-
 func (db *DB) GetEventInfo(ctx context.Context, eventID string) (rsvps.EventInfo, error) {
 	var (
 		eventInfo  rsvps.EventInfo
@@ -256,7 +253,7 @@ func (db *DB) GetEventInfo(ctx context.Context, eventID string) (rsvps.EventInfo
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return rsvps.EventInfo{}, ErrNoEvents
+			return rsvps.EventInfo{}, dbpkg.ErrNoEvents
 		}
 		return rsvps.EventInfo{}, fmt.Errorf("could not query event info: %w", err)
 	}

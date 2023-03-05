@@ -3,12 +3,12 @@ package redisring
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 
+	"github.com/oizgagin/ing/pkg/cache"
 	configtypes "github.com/oizgagin/ing/pkg/config/types"
 	"github.com/oizgagin/ing/pkg/rsvps"
 )
@@ -55,13 +55,11 @@ func NewCache(cfg Config) (*Cache, error) {
 	return cache, nil
 }
 
-var ErrNoCachedEventInfo = errors.New("no cached event info")
-
 func (c *Cache) Get(ctx context.Context, eventID string) (rsvps.EventInfo, error) {
 	j, err := c.ring.Get(ctx, eventID).Bytes()
 	if err != nil {
 		if err == redis.Nil {
-			return rsvps.EventInfo{}, ErrNoCachedEventInfo
+			return rsvps.EventInfo{}, cache.ErrNoCachedEventInfo
 		}
 		return rsvps.EventInfo{}, fmt.Errorf("could not get cached event: %w", err)
 	}

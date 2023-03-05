@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/oizgagin/ing/pkg/rsvps"
@@ -17,3 +18,5 @@ type TopkEvent struct {
 	Event          rsvps.Event
 	ConfirmedRSVPs int
 }
+
+var ErrNoEvents = errors.New("no events in result set")
