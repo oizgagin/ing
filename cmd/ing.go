@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	configFile = flag.String("config", "/etc/ing/ing.toml", "path to config file")
+	configFile = flag.String("config", "/usr/local/etc/ing/config.toml", "path to config file")
 )
 
 func main() {

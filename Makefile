@@ -35,3 +35,7 @@ test-e2e: test-e2e-down
 		docker-compose -f docker-compose-e2e.yml down \
 	)
 	docker-compose -f docker-compose-e2e.yml down
+
+.PHONY: image
+image:
+	docker build -t oizgagin/ing:latest .
