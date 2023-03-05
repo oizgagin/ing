@@ -263,8 +263,9 @@ func (db *DB) GetEventInfo(ctx context.Context, eventID string) (rsvps.EventInfo
 	return eventInfo, nil
 }
 
-func (db *DB) Close() {
+func (db *DB) Close() error {
 	db.pool.Close()
+	return nil
 }
 
 func (db *DB) metrics(ctx context.Context) {

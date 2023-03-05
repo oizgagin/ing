@@ -18,6 +18,20 @@ type DB struct {
 	mock.Mock
 }
 
+// Close provides a mock function with given fields:
+func (_m *DB) Close() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetEventInfo provides a mock function with given fields: ctx, eventID
 func (_m *DB) GetEventInfo(ctx context.Context, eventID string) (rsvps.EventInfo, error) {
 	ret := _m.Called(ctx, eventID)

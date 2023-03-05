@@ -13,6 +13,7 @@ type DB interface {
 	SaveRSVP(ctx context.Context, rsvp rsvps.RSVP) error
 	TopkEvents(ctx context.Context, date time.Time, k uint) ([]TopkEvent, error)
 	GetEventInfo(ctx context.Context, eventID string) (rsvps.EventInfo, error)
+	Close() error
 }
 
 type TopkEvent struct {
